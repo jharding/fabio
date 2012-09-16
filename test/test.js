@@ -1,3 +1,4 @@
+var _ = require('underscore');
 var assert = require('assert');
 var sinon = require('sinon');
 var fabio = require('../lib/fabio');
@@ -20,7 +21,7 @@ describe('Model Extension', function() {
       var Model = fabio.Model.extend({ defaults: defaults });
       var model = new Model();
 
-      Object.keys(defaults).forEach(function(key) {
+      _(defaults).forEach(function(value, key) {
         assert.strictEqual(model._attributes[key], defaults[key]);
       });
     });
@@ -30,13 +31,18 @@ describe('Model Extension', function() {
     var Model, model;
 
     beforeEach(function() {
-      Model = fabio.Model.extend();
+      Model = fabio.Model.extend({
+        validaters: {
+          validatedProp: function(validatedProp) {
+            return validatedProp > 0;
+          }
+        }
+      });
       model = new Model();
     });
 
     it('should accept (key, value) signature', function() {
       model.set('prop', 1);
-
       assert.strictEqual(model._attributes.prop, 1);
     });
 
@@ -44,9 +50,29 @@ describe('Model Extension', function() {
       var attributes = { prop1: 1, prop2: 2 };
       model.set(attributes);
 
-      Object.keys(attributes).forEach(function(key) {
+      _(attributes).forEach(function(value, key) {
         assert.strictEqual(model._attributes[key], attributes[key]);
       });
+    });
+
+    it('should throw an error if an attribute fails its validater', function() {
+      assert.throws(function() {
+        model.set('validatedProp', -1);
+      });
+    });
+
+    it('should abort if an attribute fails its validater', function() {
+      var _attributes = _.clone(model._attributes);
+      assert.throws(function() {
+        model.set({ prop1: 1, prop2: 2, validatedProp: -1 });
+      });
+
+      assert.deepEqual(model._attributes, _attributes);
+    });
+
+    it('should act normal if an attribute passes its validater', function() {
+      model.set('validatedProp', 1);
+      assert.strictEqual(model._attributes.validatedProp, 1);
     });
 
     it('should be chainable', function() {
