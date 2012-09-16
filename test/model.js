@@ -3,7 +3,7 @@ var assert = require('assert');
 var sinon = require('sinon');
 var fabio = require('../lib/fabio');
 
-describe('Model Extension', function() {
+describe('Model', function() {
   describe('#constructor', function() {
     it('should call initalize method', function() {
       var spy = sinon.spy();
