@@ -32,7 +32,7 @@ describe('Model', function() {
 
     beforeEach(function() {
       Model = fabio.Model.extend({
-        validaters: {
+        validators: {
           validatedProp: function(validatedProp) {
             return validatedProp > 0;
           }
@@ -55,13 +55,13 @@ describe('Model', function() {
       });
     });
 
-    it('should throw an error if an attribute fails its validater', function() {
+    it('should throw an error if an attribute fails its validator', function() {
       assert.throws(function() {
         model.set('validatedProp', -1);
       });
     });
 
-    it('should abort if an attribute fails its validater', function() {
+    it('should abort if an attribute fails its validator', function() {
       var _attributes = _.clone(model._attributes);
       assert.throws(function() {
         model.set({ prop1: 1, prop2: 2, validatedProp: -1 });
@@ -70,7 +70,7 @@ describe('Model', function() {
       assert.deepEqual(model._attributes, _attributes);
     });
 
-    it('should act normal if an attribute passes its validater', function() {
+    it('should act normal if an attribute passes its validator', function() {
       model.set('validatedProp', 1);
       assert.strictEqual(model._attributes.validatedProp, 1);
     });
