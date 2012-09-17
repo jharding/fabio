@@ -14,15 +14,15 @@ describe('Model', function() {
     });
 
     it('should use defaults', function() {
-      var defaults = {
-        prop1: 1,
-        prop2: 'hi there.'
+      var schema = {
+        prop1: { default: 1 },
+        prop2: { default: 'hi there.' }
       };
-      var Model = fabio.Model.extend({ defaults: defaults });
+      var Model = fabio.Model.extend({ schema: schema });
       var model = new Model();
 
-      _(defaults).forEach(function(value, key) {
-        assert.strictEqual(model._attributes[key], defaults[key]);
+      _(schema).forEach(function(value, key) {
+        assert.strictEqual(model._attributes[key], value.default);
       });
     });
   });
@@ -32,9 +32,11 @@ describe('Model', function() {
 
     beforeEach(function() {
       Model = fabio.Model.extend({
-        validators: {
-          validatedProp: function(validatedProp) {
-            return validatedProp > 0;
+        schema: {
+          prop1: {},
+          prop2: {},
+          validatedProp: {
+            validator: function(value) { return value > 0; }
           }
         }
       });
@@ -42,8 +44,8 @@ describe('Model', function() {
     });
 
     it('should accept (key, value) signature', function() {
-      model.set('prop', 1);
-      assert.strictEqual(model._attributes.prop, 1);
+      model.set('prop1', 1);
+      assert.strictEqual(model._attributes.prop1, 1);
     });
 
     it('should accept (object) signature', function() {
@@ -76,7 +78,7 @@ describe('Model', function() {
     });
 
     it('should be chainable', function() {
-      assert.deepEqual(model, model.set());
+      assert.deepEqual(model, model.set({}));
     });
   });
 
@@ -84,7 +86,9 @@ describe('Model', function() {
     var Model, model;
 
     beforeEach(function() {
-      Model = fabio.Model.extend();
+      Model = fabio.Model.extend({
+        schema: { prop: {} }
+      });
       model = new Model();
     });
 
