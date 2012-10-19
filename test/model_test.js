@@ -23,12 +23,14 @@ describe('Model', function() {
       };
 
       Model = fabio.define({
-        val: {}
-      , default: { default: 'i am default' }
-      , map1: { map: mapStub }
-      , map2: { map: mapStub }
-      , validator1: { validators: validatorStub }
-      , validator2: { validators: [validatorStub, validatorStub] }
+        schema: {
+          val: {}
+        , default: { default: 'i am default' }
+        , map1: { map: mapStub }
+        , map2: { map: mapStub }
+        , validator1: { validators: validatorStub }
+        , validator2: { validators: [validatorStub, validatorStub] }
+        }
       });
     });
 
@@ -117,38 +119,40 @@ describe('Model', function() {
       };
 
       Model = fabio.define({
-        syncMap: { map: syncMapStub }
-      , asyncMap: { map: asyncMapStub }
-      , syncValidator: { validators: syncValidatorStub }
-      , asyncValidator: { validators: asyncValidatorStub }
-      , validators: { validators: [syncValidatorStub, syncValidatorStub] }
-      , failSyncValidator: { validators: function(val) { return false; } }
-      , failAsyncValidator: {
-          validators: function(val, cb) {
-            process.nextTick(function() { cb(null, false); });
+        schema: {
+          syncMap: { map: syncMapStub }
+        , asyncMap: { map: asyncMapStub }
+        , syncValidator: { validators: syncValidatorStub }
+        , asyncValidator: { validators: asyncValidatorStub }
+        , validators: { validators: [syncValidatorStub, syncValidatorStub] }
+        , failSyncValidator: { validators: function(val) { return false; } }
+        , failAsyncValidator: {
+            validators: function(val, cb) {
+              process.nextTick(function() { cb(null, false); });
+            }
           }
-        }
-      , errorSyncMap: {
-          map: function(val) { throw new Error('errorSyncMap'); }
-        }
-      , errorAsyncMap: {
-          map: function(val, cb) {
-            process.nextTick(function() { cb(new Error('errorAsyncMap')); });
+        , errorSyncMap: {
+            map: function(val) { throw new Error('errorSyncMap'); }
           }
-        }
-      , errorSyncValidator: {
-          validators: function(val) { throw new Error('errorSyncValidator'); }
-        }
-      , errorAsyncValidator: {
-          map: function(val, cb) {
-            process.nextTick(function() {
-              cb(new Error('errorAsyncValidator'));
-            });
+        , errorAsyncMap: {
+            map: function(val, cb) {
+              process.nextTick(function() { cb(new Error('errorAsyncMap')); });
+            }
           }
-        }
-      , order: {
-          map: asyncMapStub
-        , validators: [syncValidatorStub, asyncValidatorStub, syncValidatorStub]
+        , errorSyncValidator: {
+            validators: function(val) { throw new Error('errorSyncValidator'); }
+          }
+        , errorAsyncValidator: {
+            map: function(val, cb) {
+              process.nextTick(function() {
+                cb(new Error('errorAsyncValidator'));
+              });
+            }
+          }
+        , order: {
+            map: asyncMapStub
+          , validators: [syncValidatorStub, asyncValidatorStub, syncValidatorStub]
+          }
         }
       });
     });
@@ -273,11 +277,13 @@ describe('Model', function() {
   describe('#get', function() {
     beforeEach(function() {
       Model = fabio.define({
-        val1: { default: 'val1' }
-      , val2: {}
-      , forever: {
-          map: function(val, cb) {
-            setTimeout(function() { cb(null, val + 'forever'); }, 500);
+        schema: {
+          val1: { default: 'val1' }
+        , val2: {}
+        , forever: {
+            map: function(val, cb) {
+              setTimeout(function() { cb(null, val + 'forever'); }, 500);
+            }
           }
         }
       });
