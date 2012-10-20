@@ -35,7 +35,7 @@ describe('Model', function() {
     });
 
     it('should accept hash of attrs for inital values', function(done) {
-      (new Model({ val: 'initial value' }))
+      new Model({ val: 'initial value' })
       .get(function(model, attrs) {
         assert.equal(attrs.val, 'initial value');
         done();
@@ -43,7 +43,7 @@ describe('Model', function() {
     });
 
     it('should use default value if value is not provided', function(done) {
-      (new Model())
+      new Model()
       .get(function(model, attrs) {
         assert.equal(attrs.default, 'i am default');
         done();
@@ -51,7 +51,7 @@ describe('Model', function() {
     });
 
     it('should not use default value if value is provided', function(done) {
-      (new Model({ default: 'not default' }))
+      new Model({ default: 'not default' })
       .get(function(model, attrs) {
         assert.equal(attrs.default, 'not default');
         done();
@@ -292,7 +292,7 @@ describe('Model', function() {
     it('should be truly async', function(done) {
       var counter = 0;
 
-      (new Model())
+      new Model()
       .get(function(model, attrs) {
         assert.equal(counter += 1, 2);
         done();
@@ -306,7 +306,7 @@ describe('Model', function() {
 
       setTimeout(function() { flag = true; }, 250);
 
-      (new Model({ forever: 'longtime' }))
+      new Model({ forever: 'longtime' })
       .get(function(model, attrs) { assert(flag); done(); });
     });
 
