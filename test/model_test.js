@@ -273,4 +273,8 @@ describe('Model', function() {
       });
     });
   });
+
+  xdescribe('#save', function() {
+    // TODO
+  });
 });
