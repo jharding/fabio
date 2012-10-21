@@ -34,9 +34,14 @@ describe('Model', function() {
       });
     });
 
+    it('should return a promise instance', function() {
+      var model = new Model();
+      assert(model instanceof Model.Promise);
+    });
+
     it('should accept hash of attrs for inital values', function(done) {
       new Model({ val: 'initial value' })
-      .get(function(model, attrs) {
+      .getAttrs().then(function(attrs) {
         assert.equal(attrs.val, 'initial value');
         done();
       });
@@ -44,7 +49,7 @@ describe('Model', function() {
 
     it('should use default value if value is not provided', function(done) {
       new Model()
-      .get(function(model, attrs) {
+      .getAttrs().then(function(attrs) {
         assert.equal(attrs.default, 'i am default');
         done();
       });
@@ -52,7 +57,7 @@ describe('Model', function() {
 
     it('should not use default value if value is provided', function(done) {
       new Model({ default: 'not default' })
-      .get(function(model, attrs) {
+      .getAttrs().then(function(attrs) {
         assert.equal(attrs.default, 'not default');
         done();
       });
@@ -161,14 +166,15 @@ describe('Model', function() {
       var model = new Model()
         , _model = model.set();
 
-      assert.deepEqual(_model, model);
+      assert(_model instanceof Model.Promise);
+      assert.deepEqual(model._model, _model._model);
     });
 
     it('should call map functions', function(done) {
       var model = new Model();
 
       model.set({ syncMap: 1, asyncMap: 2 })
-      .get(function(model, attrs) {
+      .getAttrs().then(function(attrs) {
         assert.equal(syncMapStubCalledCount, 1);
         assert.equal(asyncMapStubCalledCount, 1);
         done();
@@ -179,7 +185,7 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ syncValidator: 1, asyncValidator: 2, validators: 3 })
-      .get(function(model, attrs) {
+      .getAttrs().then(function(attrs) {
         assert.equal(syncValidatorStubCalledCount, 3);
         assert.equal(asyncValidatorStubCalledCount, 1);
         done();
@@ -190,14 +196,8 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ order: 'order' })
-      .get(function(model, attrs) {
-        var expectedOrder = [
-          'syncValidator'
-        , 'asyncValidator'
-        , 'syncValidator'
-        , 'asyncMap'
-        ];
-        assert.deepEqual(callOrder, expectedOrder);
+      .getAttrs().then(function(attrs) {
+        assert.equal(callOrder.indexOf('asyncMap'), 3);
         done();
       });
     });
@@ -246,7 +246,7 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ syncMap: 'sync', asyncMap: 'async' })
-      .get(function(model, attrs) {
+      .getAttrs().then(function(attrs) {
         assert.equal(attrs.syncMap, 'syncsync');
         assert.equal(attrs.asyncMap, 'asyncasync');
         done();
@@ -272,43 +272,5 @@ describe('Model', function() {
         done();
       });
     });
-  });
-
-  describe('#get', function() {
-    beforeEach(function() {
-      Model = fabio.define({
-        schema: {
-          val1: { default: 'val1' }
-        , val2: {}
-        , forever: {
-            map: function(val, cb) {
-              setTimeout(function() { cb(null, val + 'forever'); }, 500);
-            }
-          }
-        }
-      });
-    });
-
-    it('should be truly async', function(done) {
-      var counter = 0;
-
-      new Model()
-      .get(function(model, attrs) {
-        assert.equal(counter += 1, 2);
-        done();
-      });
-
-      assert.equal(counter += 1, 1);
-    });
-
-    it('should call callback after helper functions finished', function(done) {
-      var flag = false;
-
-      setTimeout(function() { flag = true; }, 250);
-
-      new Model({ forever: 'longtime' })
-      .get(function(model, attrs) { assert(flag); done(); });
-    });
-
   });
 });
