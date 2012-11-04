@@ -7,30 +7,9 @@ describe('Model', function() {
   var Model;
 
   describe('#constructor', function() {
-    var mapStub
-      , validatorStub
-      , mapStubCalledCount
-      , validatorStubCalledCount;
-
     beforeEach(function() {
-      mapStubCalledCount = 0;
-      validatorStubCalledCount = 0;
-      mapStub = function(val) {
-        mapStubCalledCount += 1; return 'val';
-      };
-      validatorStub = function(val) {
-        validatorStubCalledCount += 1; return true;
-      };
-
       Model = fabio.define({
-        schema: {
-          val: {}
-        , default: { default: 'i am default' }
-        , map1: { map: mapStub }
-        , map2: { map: mapStub }
-        , validator1: { validators: validatorStub }
-        , validator2: { validators: [validatorStub, validatorStub] }
-        }
+        schema: { val: {} , default: { default: 'i am default' } }
       });
     });
 
@@ -41,7 +20,7 @@ describe('Model', function() {
 
     it('should accept hash of attrs for inital values', function(done) {
       new Model({ val: 'initial value' })
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(attrs.val, 'initial value');
         done();
       });
@@ -49,7 +28,7 @@ describe('Model', function() {
 
     it('should use default value if value is not provided', function(done) {
       new Model()
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(attrs.default, 'i am default');
         done();
       });
@@ -57,7 +36,7 @@ describe('Model', function() {
 
     it('should not use default value if value is provided', function(done) {
       new Model({ default: 'not default' })
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(attrs.default, 'not default');
         done();
       });
@@ -69,6 +48,17 @@ describe('Model', function() {
 
       assert(spy.calledWith({ val: 1, default: 2 }));
       done();
+    });
+
+    it('should bypass set if raw option is true', function(done) {
+      var spy = sinon.spy(Model.prototype, 'set')
+        , model = new Model({ val: 1, default: 2 }, { raw: true });
+
+      model.value(function(attrs) {
+        assert(!spy.called);
+        assert.deepEqual(attrs, { val: 1, default: 2 });
+        done();
+      });
     });
   });
 
@@ -174,7 +164,7 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ syncMap: 1, asyncMap: 2 })
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(syncMapStubCalledCount, 1);
         assert.equal(asyncMapStubCalledCount, 1);
         done();
@@ -185,7 +175,7 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ syncValidator: 1, asyncValidator: 2, validators: 3 })
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(syncValidatorStubCalledCount, 3);
         assert.equal(asyncValidatorStubCalledCount, 1);
         done();
@@ -196,7 +186,7 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ order: 'order' })
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(callOrder.indexOf('asyncMap'), 3);
         done();
       });
@@ -246,7 +236,7 @@ describe('Model', function() {
       var model = new Model();
 
       model.set({ syncMap: 'sync', asyncMap: 'async' })
-      .getAttrs().val(function(attrs) {
+      .value(function(attrs) {
         assert.equal(attrs.syncMap, 'syncsync');
         assert.equal(attrs.asyncMap, 'asyncasync');
         done();
@@ -306,7 +296,7 @@ describe('Model', function() {
 
     it('should call fulfillment callback with attributes', function(done) {
       new Model({ val: 'initial value' })
-      .save().val(function(attrs) {
+      .save().value(function(attrs) {
         assert.deepEqual(attrs, { val: 'initial value' });
         done();
       });
@@ -314,7 +304,7 @@ describe('Model', function() {
 
     it('should call create if model is new', function(done) {
       new Model({ val: 'initial value' })
-      .save().val(function(attrs) {
+      .save().value(function(attrs) {
         assert(createStub.called);
         assert(!updateStub.called);
         done();
@@ -323,7 +313,7 @@ describe('Model', function() {
 
     it('should call update if model is not new', function(done) {
       new Model({ id: 1, val: 'initial value' })
-      .save().val(function(attrs) {
+      .save().value(function(attrs) {
         assert(updateStub.called);
         assert(!createStub.called);
         done();
