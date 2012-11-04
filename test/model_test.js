@@ -51,10 +51,10 @@ describe('Model', function() {
     });
 
     it('should bypass set if raw option is true', function(done) {
-      var spy = sinon.spy(Model.prototype, 'set')
-        , model = new Model({ val: 1, default: 2 }, { raw: true });
+      var spy = sinon.spy(Model.prototype, 'set');
 
-      model.value(function(attrs) {
+      new Model({ val: 1, default: 2 }, { raw: true })
+      .value(function(attrs) {
         assert(!spy.called);
         assert.deepEqual(attrs, { val: 1, default: 2 });
         done();
@@ -161,9 +161,8 @@ describe('Model', function() {
     });
 
     it('should call map functions', function(done) {
-      var model = new Model();
-
-      model.set({ syncMap: 1, asyncMap: 2 })
+      new Model()
+      .set({ syncMap: 1, asyncMap: 2 })
       .value(function(attrs) {
         assert.equal(syncMapStubCalledCount, 1);
         assert.equal(asyncMapStubCalledCount, 1);
@@ -172,9 +171,8 @@ describe('Model', function() {
     });
 
     it('should call validator functions', function(done) {
-      var model = new Model();
-
-      model.set({ syncValidator: 1, asyncValidator: 2, validators: 3 })
+      new Model()
+      .set({ syncValidator: 1, asyncValidator: 2, validators: 3 })
       .value(function(attrs) {
         assert.equal(syncValidatorStubCalledCount, 3);
         assert.equal(asyncValidatorStubCalledCount, 1);
@@ -183,9 +181,8 @@ describe('Model', function() {
     });
 
     it('should process validators before maps', function(done) {
-      var model = new Model();
-
-      model.set({ order: 'order' })
+      new Model()
+      .set({ order: 'order' })
       .value(function(attrs) {
         assert.equal(callOrder.indexOf('asyncMap'), 3);
         done();
@@ -193,9 +190,8 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if sync validator fails', function(done) {
-      var model = new Model();
-
-      model.set({ errorSyncValidator: 1 })
+      new Model()
+      .set({ errorSyncValidator: 1 })
       .error(function(err) {
         assert.equal(err.message, 'errorSyncValidator');
         done();
@@ -203,9 +199,8 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if async validator fails', function(done) {
-      var model = new Model();
-
-      model.set({ errorAsyncValidator: 1 })
+      new Model()
+      .set({ errorAsyncValidator: 1 })
       .error(function(err) {
         assert.equal(err.message, 'errorAsyncValidator');
         done();
@@ -213,9 +208,8 @@ describe('Model', function() {
     });
 
     it('should treat sync validation failture as error', function(done) {
-      var model = new Model();
-
-      model.set({ failSyncValidator: 1 })
+      new Model()
+      .set({ failSyncValidator: 1 })
       .error(function(err) {
         assert(/failSyncValidator/.test(err.message));
         done();
@@ -223,9 +217,8 @@ describe('Model', function() {
     });
 
     it('should treat async validation failture as error', function(done) {
-      var model = new Model();
-
-      model.set({ failAsyncValidator: 1 })
+      new Model()
+      .set({ failAsyncValidator: 1 })
       .error(function(err) {
         assert(/failAsyncValidator/.test(err.message));
         done();
@@ -233,9 +226,8 @@ describe('Model', function() {
     });
 
     it('should map attr values according to map functions', function(done) {
-      var model = new Model();
-
-      model.set({ syncMap: 'sync', asyncMap: 'async' })
+      new Model()
+      .set({ syncMap: 'sync', asyncMap: 'async' })
       .value(function(attrs) {
         assert.equal(attrs.syncMap, 'syncsync');
         assert.equal(attrs.asyncMap, 'asyncasync');
@@ -244,9 +236,8 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if sync map fails', function(done) {
-      var model = new Model();
-
-      model.set({ errorSyncMap: 'sync' })
+      new Model()
+      .set({ errorSyncMap: 'sync' })
       .error(function(err) {
         assert.equal(err.message, 'errorSyncMap');
         done();
@@ -254,9 +245,8 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if async map fails', function(done) {
-      var model = new Model();
-
-      model.set({ errorAsyncMap: 'async' })
+      new Model()
+      .set({ errorAsyncMap: 'async' })
       .error(function(err) {
         assert.equal(err.message, 'errorAsyncMap');
         done();
@@ -296,7 +286,8 @@ describe('Model', function() {
 
     it('should call fulfillment callback with attributes', function(done) {
       new Model({ val: 'initial value' })
-      .save().value(function(attrs) {
+      .save()
+      .value(function(attrs) {
         assert.deepEqual(attrs, { val: 'initial value' });
         done();
       });
@@ -304,7 +295,8 @@ describe('Model', function() {
 
     it('should call create if model is new', function(done) {
       new Model({ val: 'initial value' })
-      .save().value(function(attrs) {
+      .save()
+      .value(function(attrs) {
         assert(createStub.called);
         assert(!updateStub.called);
         done();
@@ -313,7 +305,8 @@ describe('Model', function() {
 
     it('should call update if model is not new', function(done) {
       new Model({ id: 1, val: 'initial value' })
-      .save().value(function(attrs) {
+      .save()
+      .value(function(attrs) {
         assert(updateStub.called);
         assert(!createStub.called);
         done();
