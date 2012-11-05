@@ -18,7 +18,7 @@ describe('Model', function() {
       assert(model instanceof Model.Promise);
     });
 
-    it('should accept hash of attrs for inital values', function(done) {
+    it('should accept hash of attrs for initial values', function(done) {
       new Model({ val: 'initial value' })
       .value(function(attrs) {
         assert.equal(attrs.val, 'initial value');
