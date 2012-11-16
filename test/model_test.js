@@ -6,7 +6,7 @@ var _ = require('underscore')
 describe('Model', function() {
   var Model;
 
-  describe('#constructor', function() {
+  describe('#new', function() {
     beforeEach(function() {
       Model = fabio.define({
         schema: { val: {} , default: { default: 'i am default' } }
@@ -14,12 +14,12 @@ describe('Model', function() {
     });
 
     it('should return a promise instance', function() {
-      var model = new Model();
+      var model = Model.new();
       assert(model instanceof Model.Promise);
     });
 
     it('should accept hash of attrs for initial values', function(done) {
-      new Model({ val: 'initial value' })
+      Model.new({ val: 'initial value' })
       .value(function(attrs) {
         assert.equal(attrs.val, 'initial value');
         done();
@@ -27,7 +27,7 @@ describe('Model', function() {
     });
 
     it('should use default value if value is not provided', function(done) {
-      new Model()
+      Model.new()
       .value(function(attrs) {
         assert.equal(attrs.default, 'i am default');
         done();
@@ -35,7 +35,7 @@ describe('Model', function() {
     });
 
     it('should not use default value if value is provided', function(done) {
-      new Model({ default: 'not default' })
+      Model.new({ default: 'not default' })
       .value(function(attrs) {
         assert.equal(attrs.default, 'not default');
         done();
@@ -44,16 +44,16 @@ describe('Model', function() {
 
     it('should call set with passed in attributes', function(done) {
       var spy = sinon.spy(Model.prototype, 'set')
-        , model = new Model({ val: 1, default: 2 });
+        , model = Model.new({ val: 1, default: 2 });
 
       assert(spy.calledWith({ val: 1, default: 2 }));
       done();
     });
 
-    it('should bypass set if raw option is true', function(done) {
+    it('should bypass set if load option is true', function(done) {
       var spy = sinon.spy(Model.prototype, 'set');
 
-      new Model({ val: 1, default: 2 }, { raw: true })
+      Model.new({ val: 1, default: 2 }, { load: true })
       .value(function(attrs) {
         assert(!spy.called);
         assert.deepEqual(attrs, { val: 1, default: 2 });
@@ -153,7 +153,7 @@ describe('Model', function() {
     });
 
     it('should be chainable', function() {
-      var model = new Model()
+      var model = Model.new()
         , _model = model.set();
 
       assert(_model instanceof Model.Promise);
@@ -161,7 +161,7 @@ describe('Model', function() {
     });
 
     it('should call map functions', function(done) {
-      new Model()
+      Model.new()
       .set({ syncMap: 1, asyncMap: 2 })
       .value(function(attrs) {
         assert.equal(syncMapStubCalledCount, 1);
@@ -171,7 +171,7 @@ describe('Model', function() {
     });
 
     it('should call validator functions', function(done) {
-      new Model()
+      Model.new()
       .set({ syncValidator: 1, asyncValidator: 2, validators: 3 })
       .value(function(attrs) {
         assert.equal(syncValidatorStubCalledCount, 3);
@@ -181,7 +181,7 @@ describe('Model', function() {
     });
 
     it('should process validators before maps', function(done) {
-      new Model()
+      Model.new()
       .set({ order: 'order' })
       .value(function(attrs) {
         assert.equal(callOrder.indexOf('asyncMap'), 3);
@@ -190,7 +190,7 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if sync validator fails', function(done) {
-      new Model()
+      Model.new()
       .set({ errorSyncValidator: 1 })
       .error(function(err) {
         assert.equal(err.message, 'errorSyncValidator');
@@ -199,7 +199,7 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if async validator fails', function(done) {
-      new Model()
+      Model.new()
       .set({ errorAsyncValidator: 1 })
       .error(function(err) {
         assert.equal(err.message, 'errorAsyncValidator');
@@ -208,7 +208,7 @@ describe('Model', function() {
     });
 
     it('should treat sync validation failture as error', function(done) {
-      new Model()
+      Model.new()
       .set({ failSyncValidator: 1 })
       .error(function(err) {
         assert(/failSyncValidator/.test(err.message));
@@ -217,7 +217,7 @@ describe('Model', function() {
     });
 
     it('should treat async validation failture as error', function(done) {
-      new Model()
+      Model.new()
       .set({ failAsyncValidator: 1 })
       .error(function(err) {
         assert(/failAsyncValidator/.test(err.message));
@@ -226,7 +226,7 @@ describe('Model', function() {
     });
 
     it('should map attr values according to map functions', function(done) {
-      new Model()
+      Model.new()
       .set({ syncMap: 'sync', asyncMap: 'async' })
       .value(function(attrs) {
         assert.equal(attrs.syncMap, 'syncsync');
@@ -236,7 +236,7 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if sync map fails', function(done) {
-      new Model()
+      Model.new()
       .set({ errorSyncMap: 'sync' })
       .error(function(err) {
         assert.equal(err.message, 'errorSyncMap');
@@ -245,7 +245,7 @@ describe('Model', function() {
     });
 
     it('should invoke error callback if async map fails', function(done) {
-      new Model()
+      Model.new()
       .set({ errorAsyncMap: 'async' })
       .error(function(err) {
         assert.equal(err.message, 'errorAsyncMap');
@@ -285,7 +285,7 @@ describe('Model', function() {
     });
 
     it('should call fulfillment callback with attributes', function(done) {
-      new Model({ val: 'initial value' })
+      Model.new({ val: 'initial value' })
       .save()
       .value(function(attrs) {
         assert.deepEqual(attrs, { val: 'initial value' });
@@ -294,7 +294,7 @@ describe('Model', function() {
     });
 
     it('should call create if model is new', function(done) {
-      new Model({ val: 'initial value' })
+      Model.new({ val: 'initial value' })
       .save()
       .value(function(attrs) {
         assert(createStub.called);
@@ -304,7 +304,7 @@ describe('Model', function() {
     });
 
     it('should call update if model is not new', function(done) {
-      new Model({ id: 1, val: 'initial value' })
+      Model.new({ id: 1, val: 'initial value' })
       .save()
       .value(function(attrs) {
         assert(updateStub.called);
