@@ -1,18 +1,21 @@
+'use strict';
+
 var _ = require('underscore')
   , assert = require('assert')
   , sinon = require('sinon')
-  , fabio = require('../lib/fabio');
+  , Tasks = require('../lib/tasks')
+  , defineModel = require('../lib/model_factory');
 
 describe('Model', function() {
   var Model;
 
   beforeEach(function() {
-    Model = fabio.define({});
+    Model = defineModel({});
   });
 
   describe('constructor', function() {
     beforeEach(function() {
-      Model = fabio.define({
+      Model = defineModel({
         schema: { val: {} , default: { default: 'i am default' } }
       });
     });
@@ -90,254 +93,115 @@ describe('Model', function() {
     });
   });
 
-  xdescribe('#set', function() {
-    var callOrder
-      , syncMapStub
-      , asyncMapStub
-      , syncValidatorStub
-      , asyncValidatorStub
-      , syncMapStubCalledCount
-      , asyncMapStubCalledCount
-      , syncValidatorStubCalledCount
-      , asyncValidatorStubCalledCount;
-
+  describe('#set', function() {
     beforeEach(function() {
-      callOrder = [];
-
-      syncMapStubCalledCount =
-      asyncMapStubCalledCount =
-      syncValidatorStubCalledCount =
-      asyncValidatorStubCalledCount = 0;
-
-      syncMapStub = function(val) {
-        callOrder.push('syncMap');
-        syncMapStubCalledCount += 1;
-
-        return 'sync' + val;
-      };
-
-      asyncMapStub = function(val, cb) {
-        process.nextTick(function() {
-          callOrder.push('asyncMap');
-          asyncMapStubCalledCount += 1;
-
-          cb(null, 'async' + val);
-        });
-      };
-
-      syncValidatorStub = function(val) {
-        callOrder.push('syncValidator');
-        syncValidatorStubCalledCount += 1;
-
-        return true;
-      };
-
-      asyncValidatorStub = function(val, cb) {
-        process.nextTick(function() {
-          callOrder.push('asyncValidator');
-          asyncValidatorStubCalledCount += 1;
-
-          cb(null, true);
-        });
-      };
-
-      Model = fabio.define({
-        schema: {
-          syncMap: { map: syncMapStub }
-        , asyncMap: { map: asyncMapStub }
-        , syncValidator: { validators: syncValidatorStub }
-        , asyncValidator: { validators: asyncValidatorStub }
-        , validators: { validators: [syncValidatorStub, syncValidatorStub] }
-        , failSyncValidator: { validators: function(val) { return false; } }
-        , failAsyncValidator: {
-            validators: function(val, cb) {
-              process.nextTick(function() { cb(null, false); });
-            }
-          }
-        , errorSyncMap: {
-            map: function(val) { throw new Error('errorSyncMap'); }
-          }
-        , errorAsyncMap: {
-            map: function(val, cb) {
-              process.nextTick(function() { cb(new Error('errorAsyncMap')); });
-            }
-          }
-        , errorSyncValidator: {
-            validators: function(val) { throw new Error('errorSyncValidator'); }
-          }
-        , errorAsyncValidator: {
-            map: function(val, cb) {
-              process.nextTick(function() {
-                cb(new Error('errorAsyncValidator'));
-              });
-            }
-          }
-        , order: {
-            map: asyncMapStub
-          , validators: [syncValidatorStub, asyncValidatorStub, syncValidatorStub]
-          }
-        }
+      Model = defineModel({
+        schema: { one: {} , two: {}, three: {} }
       });
     });
 
-    it('should be chainable', function() {
-      var model = Model.new()
-        , _model = model.set();
-
-      assert(_model instanceof Model.Promise);
-      assert.deepEqual(model._model, _model._model);
-    });
-
-    xit('should call map functions', function(done) {
+    it('should set model attributes to passed in values', function(done) {
       Model.new()
-      .set({ syncMap: 1, asyncMap: 2 })
+      .set({ one: 1, two: 2, three: 3 })
       .value(function(attrs) {
-        assert.equal(syncMapStubCalledCount, 1);
-        assert.equal(asyncMapStubCalledCount, 1);
+        assert.equal(attrs.one, 1);
+        assert.equal(attrs.two, 2);
+        assert.equal(attrs.three, 3);
         done();
       });
     });
 
-    xit('should call validator functions', function(done) {
-      Model.new()
-      .set({ syncValidator: 1, asyncValidator: 2, validators: 3 })
+    it('should override existing values', function(done) {
+      Model.new({ one: 1, two: 2, three: 3 })
+      .set({ one: 2, two: 3 })
       .value(function(attrs) {
-        assert.equal(syncValidatorStubCalledCount, 3);
-        assert.equal(asyncValidatorStubCalledCount, 1);
+        assert.equal(attrs.one, 2);
+        assert.equal(attrs.two, 3);
+        assert.equal(attrs.three, 3);
         done();
       });
     });
 
-    xit('should process validators before maps', function(done) {
+    it('should ignore attributes not present in schema', function(done) {
       Model.new()
-      .set({ order: 'order' })
+      .set({ one: 1, two: 2, four: 4 })
       .value(function(attrs) {
-        assert.equal(callOrder.indexOf('asyncMap'), 3);
-        done();
-      });
-    });
-
-    xit('should invoke error callback if sync validator fails', function(done) {
-      Model.new()
-      .set({ errorSyncValidator: 1 })
-      .error(function(err) {
-        assert.equal(err.message, 'errorSyncValidator');
-        done();
-      });
-    });
-
-    xit('should invoke error callback if async validator fails', function(done) {
-      Model.new()
-      .set({ errorAsyncValidator: 1 })
-      .error(function(err) {
-        assert.equal(err.message, 'errorAsyncValidator');
-        done();
-      });
-    });
-
-    xit('should treat sync validation failture as error', function(done) {
-      Model.new()
-      .set({ failSyncValidator: 1 })
-      .error(function(err) {
-        assert(/failSyncValidator/.test(err.message));
-        done();
-      });
-    });
-
-    xit('should treat async validation failture as error', function(done) {
-      Model.new()
-      .set({ failAsyncValidator: 1 })
-      .error(function(err) {
-        assert(/failAsyncValidator/.test(err.message));
-        done();
-      });
-    });
-
-    xit('should map attr values according to map functions', function(done) {
-      Model.new()
-      .set({ syncMap: 'sync', asyncMap: 'async' })
-      .value(function(attrs) {
-        assert.equal(attrs.syncMap, 'syncsync');
-        assert.equal(attrs.asyncMap, 'asyncasync');
-        done();
-      });
-    });
-
-    xit('should invoke error callback if sync map fails', function(done) {
-      Model.new()
-      .set({ errorSyncMap: 'sync' })
-      .error(function(err) {
-        assert.equal(err.message, 'errorSyncMap');
-        done();
-      });
-    });
-
-    xit('should invoke error callback if async map fails', function(done) {
-      Model.new()
-      .set({ errorAsyncMap: 'async' })
-      .error(function(err) {
-        assert.equal(err.message, 'errorAsyncMap');
+        assert.strictEqual(attrs.four, undefined);
         done();
       });
     });
   });
 
-  xdescribe('#save', function() {
-    var createStub
-      , updateStub;
+  describe('#save', function() {
+    var mapStubCallCount
+      , validatorStubCallCount
+      , mapStub = function(val) { mapStubCallCount++; return 'mapped'; }
+      , validatorStub = function(val) { validatorStubCallCount++; return true; }
+      , model;
 
     beforeEach(function() {
-      createStub = function(attrs, cb) {
-        process.nextTick(function() {
-          createStub.called = true;
-          cb(null);
-        });
-      };
+      mapStubCallCount = 0;
+      validatorStubCallCount = 0;
 
-      updateStub = function(attrs, cb) {
-        process.nextTick(function() {
-          updateStub.called = true;
-          cb(null);
-        });
-      };
-
-      Model = fabio.define({
+      Model = defineModel({
         schema: {
-          val: {}
+          m1: { maps: mapStub }
+        , m2: { maps: mapStub }
+        , v1: { validators: validatorStub }
+        , v2: { validators: validatorStub  }
         }
-      , methods: {
-          create: createStub
-        , update: updateStub
-        }
       });
     });
 
-    it('should call fulfillment callback with attributes', function(done) {
-      Model.new({ val: 'initial value' })
-      .save()
-      .value(function(attrs) {
-        assert.deepEqual(attrs, { val: 'initial value' });
-        done();
+    describe('when model is new', function() {
+      beforeEach(function() {
+        model = Model.new({ m1: 1, m2: 2, v1: 1, v2: 2 })
+      });
+
+      it('should run tasks for all attributes', function(done) {
+        model.save()
+        .value(function(attrs) {
+          assert.equal(mapStubCallCount, 2);
+          assert.equal(validatorStubCallCount, 2);
+          done();
+        });
+      });
+
+      it('should call create with all attributes', function(done) {
+        var spy = sinon.spy(Model.prototype, 'create')
+
+        model.save()
+        .value(function(attrs) {
+          assert(spy.calledWith({ m1: 'mapped', m2: 'mapped', v1: 1, v2: 2 }));
+          done();
+        });
       });
     });
 
-    it('should call create if model is new', function(done) {
-      Model.new({ val: 'initial value' })
-      .save()
-      .value(function(attrs) {
-        assert(createStub.called);
-        assert(!updateStub.called);
-        done();
+    describe('when model is not new', function() {
+      beforeEach(function() {
+        model = Model.load({ id: 1, m1: 0, m2: 0, v1: 0, v2: 0 });
       });
-    });
 
-    it('should call update if model is not new', function(done) {
-      Model.new({ id: 1, val: 'initial value' })
-      .save()
-      .value(function(attrs) {
-        assert(updateStub.called);
-        assert(!createStub.called);
-        done();
+      it('should run tasks for changed attributes', function(done) {
+        model.set({ m1: 1, v1: 1 })
+        .save()
+        .value(function(attrs) {
+          assert.equal(mapStubCallCount, 1);
+          assert.equal(validatorStubCallCount, 1);
+          done();
+        });
+      });
+
+      it('should call update with changed attributes', function(done) {
+        var spy = sinon.spy(Model.prototype, 'update')
+
+        model.set({ m1: 1, v1: 1 })
+        .save()
+        .value(function(attrs) {
+          assert(spy.calledWith({ m1: 'mapped', v1: 1 }));
+          done();
+        });
       });
     });
   });
