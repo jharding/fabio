@@ -13,6 +13,9 @@ describe('Model', function() {
     Model = defineModel({});
   });
 
+  // constructor
+  // -----------
+
   describe('constructor', function() {
     beforeEach(function() {
       Model = defineModel({
@@ -68,6 +71,9 @@ describe('Model', function() {
     });
   });
 
+  // static methods
+  // --------------
+
   describe('.new', function() {
     // nothing to see here
   });
@@ -92,6 +98,9 @@ describe('Model', function() {
       assert(!spy.called);
     });
   });
+
+  // instance methods
+  // ----------------
 
   describe('#set', function() {
     beforeEach(function() {
@@ -133,7 +142,10 @@ describe('Model', function() {
   });
 
   describe('#save', function() {
-    var mapStubCallCount
+    var ValidatorFailModel
+      , ValidatorErrorModel
+      , MapErrorModel
+      , mapStubCallCount
       , validatorStubCallCount
       , mapStub = function(val) { mapStubCallCount++; return 'mapped'; }
       , validatorStub = function(val) { validatorStubCallCount++; return true; }
@@ -150,6 +162,113 @@ describe('Model', function() {
         , v1: { validators: validatorStub }
         , v2: { validators: validatorStub  }
         }
+      });
+
+      ValidatorFailModel = defineModel({
+        schema: {
+          sync: {
+            validators: function(val) { return false; }
+          }
+        , async: {
+            validators: function(val, cb) {
+              process.nextTick(function() { cb(null, false); })
+            }
+          }
+        }
+      });
+
+      ValidatorErrorModel = defineModel({
+        schema: {
+          sync: {
+            validators: function(val) { throw new Error('sync error'); }
+          }
+        , async: {
+            validators: function(val, cb) {
+              process.nextTick(function() { cb(new Error('async error')); })
+            }
+          }
+        }
+      });
+
+      MapErrorModel = defineModel({
+        schema: {
+          sync: {
+            maps: function(val) { throw new Error('sync error'); }
+          }
+        , async: {
+            maps: function(val, cb) {
+              process.nextTick(function() { cb(new Error('async error')); })
+            }
+          }
+        }
+      });
+    });
+
+    it('should treat sync validation failure as error', function(done) {
+      ValidatorFailModel.load({ id: 1 })
+      .set({ sync: 1 })
+      .save()
+      .error(function(err) {
+        assert(err.message.match(/failed validation/));
+        done();
+      });
+    });
+
+    it('should treat async validation failure as error', function(done) {
+      ValidatorFailModel.load({ id: 1 })
+      .set({ async: 1 })
+      .save()
+      .error(function(err) {
+        assert(err.message.match(/failed validation/));
+        done();
+      });
+    });
+
+    it('should call error callback on sync validator error', function(done) {
+      ValidatorErrorModel.load({ id: 1 })
+      .set({ sync: 1 })
+      .save()
+      .error(function(err) {
+        assert.equal(err.message, 'sync error');
+        done();
+      });
+    });
+
+    it('should call error callback on async validator error', function(done) {
+      ValidatorErrorModel.load({ id: 1 })
+      .set({ async: 1 })
+      .save()
+      .error(function(err) {
+        assert.equal(err.message, 'async error');
+        done();
+      });
+    });
+
+    it('should call error callback on sync map error', function(done) {
+      MapErrorModel.load({ id: 1 })
+      .set({ sync: 1 })
+      .save()
+      .error(function(err) {
+        assert.equal(err.message, 'sync error');
+        done();
+      });
+    });
+
+    it('should call error callback on async map error', function(done) {
+      MapErrorModel.load({ id: 1 })
+      .set({ async: 1 })
+      .save()
+      .error(function(err) {
+        assert.equal(err.message, 'async error');
+        done();
+      });
+    });
+
+    it('should call fullfillment callback with attributes', function(done) {
+      Model.create()
+      .value(function(attrs) {
+        assert.deepEqual(attrs, { m1: 'mapped', m2: 'mapped' });
+        done();
       });
     });
 
