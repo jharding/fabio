@@ -15,7 +15,7 @@
   "licenses": "MIT",
   "dependencies": {
     "underscore": "*",
-    "confetti": "*",
+    "confetti": "git://github.com/jharding/confetti.git#dev",
     "async": "~0.1"
   },
   "devDependencies": {
