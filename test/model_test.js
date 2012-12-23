@@ -30,7 +30,7 @@ describe('Model', function() {
 
     it('should accept hash of attrs for initial values', function(done) {
       new Model({ val: 'initial value' })
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.equal(attrs.val, 'initial value');
         done();
       });
@@ -38,7 +38,7 @@ describe('Model', function() {
 
     it('should use default value if value is not provided', function(done) {
       new Model()
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.equal(attrs.default, 'i am default');
         done();
       });
@@ -46,7 +46,7 @@ describe('Model', function() {
 
     it('should not use default value if value is provided', function(done) {
       new Model({ default: 'not default' })
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.equal(attrs.default, 'not default');
         done();
       });
@@ -63,7 +63,7 @@ describe('Model', function() {
       var spy = sinon.spy(Model.prototype, 'set');
 
       new Model({ val: 1, default: 2 }, { load: true })
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert(!spy.called);
         assert.deepEqual(attrs, { val: 1, default: 2 });
         done();
@@ -83,7 +83,7 @@ describe('Model', function() {
       var spy = sinon.spy(Model.prototype, 'create')
         , model = Model.create({});
 
-      model.value(function() {
+      model.then(function() {
         assert(spy.called);
         done();
       });
@@ -112,7 +112,7 @@ describe('Model', function() {
     it('should set model attributes to passed in values', function(done) {
       Model.new()
       .set({ one: 1, two: 2, three: 3 })
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.equal(attrs.one, 1);
         assert.equal(attrs.two, 2);
         assert.equal(attrs.three, 3);
@@ -123,7 +123,7 @@ describe('Model', function() {
     it('should override existing values', function(done) {
       Model.new({ one: 1, two: 2, three: 3 })
       .set({ one: 2, two: 3 })
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.equal(attrs.one, 2);
         assert.equal(attrs.two, 3);
         assert.equal(attrs.three, 3);
@@ -134,7 +134,7 @@ describe('Model', function() {
     it('should ignore attributes not present in schema', function(done) {
       Model.new()
       .set({ one: 1, two: 2, four: 4 })
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.strictEqual(attrs.four, undefined);
         done();
       });
@@ -266,7 +266,7 @@ describe('Model', function() {
 
     it('should call fullfillment callback with attributes', function(done) {
       Model.create()
-      .value(function(attrs) {
+      .then(function(attrs) {
         assert.deepEqual(attrs, { m1: 'mapped', m2: 'mapped' });
         done();
       });
@@ -279,7 +279,7 @@ describe('Model', function() {
 
       it('should run tasks for all attributes', function(done) {
         model.save()
-        .value(function(attrs) {
+        .then(function(attrs) {
           assert.equal(mapStubCallCount, 2);
           assert.equal(validatorStubCallCount, 2);
           done();
@@ -290,7 +290,7 @@ describe('Model', function() {
         var spy = sinon.spy(Model.prototype, 'create')
 
         model.save()
-        .value(function(attrs) {
+        .then(function(attrs) {
           assert(spy.calledWith({ m1: 'mapped', m2: 'mapped', v1: 1, v2: 2 }));
           done();
         });
@@ -305,7 +305,7 @@ describe('Model', function() {
       it('should run tasks for changed attributes', function(done) {
         model.set({ m1: 1, v1: 1 })
         .save()
-        .value(function(attrs) {
+        .then(function(attrs) {
           assert.equal(mapStubCallCount, 1);
           assert.equal(validatorStubCallCount, 1);
           done();
@@ -317,7 +317,7 @@ describe('Model', function() {
 
         model.set({ m1: 1, v1: 1 })
         .save()
-        .value(function(attrs) {
+        .then(function(attrs) {
           assert(spy.calledWith({ m1: 'mapped', v1: 1 }));
           done();
         });
